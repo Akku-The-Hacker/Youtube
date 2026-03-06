@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProTube Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        .dark-theme { background-color: #1a1a1a; color: #ffffff; }
+        .dark-theme .card { background-color: #2d2d2d; border-color: #444; }
+        .dark-theme input { background-color: #3d3d3d; color: white; border-color: #555; }
+    </style>
+</head>
+<body class="transition-colors duration-300">
+
+    <div class="min-h-screen p-4 md:p-8">
+        <!-- Header -->
+        <div class="max-w-6xl mx-auto flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-red-600">ProTube <span class="text-gray-500 font-light">Player</span></h1>
+            <button id="themeToggle" class="px-4 py-2 rounded-full bg-gray-200 dark:bg-gray-700 font-medium">
+                🌓 Toggle Theme
+            </button>
+        </div>
+
+        <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Side: Player and Controls -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- URL Input -->
+                <div class="card p-4 border rounded-xl shadow-sm bg-white">
+                    <div class="flex gap-2">
+                        <input type="text" id="videoUrl" placeholder="Paste YouTube Link (Video or Playlist)..." 
+                               class="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <button onclick="loadVideo()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+                            Load
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Video Display Area -->
+                <div class="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
+                    <div id="player"></div>
+                </div>
+
+                <!-- Custom Controls -->
+                <div class="card p-6 border rounded-xl shadow-sm bg-white grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block font-bold mb-2">Playback Speed: <span id="speedValue">1.0</span>x</label>
+                        <input type="range" id="speedSlider" min="0.5" max="10" step="0.5" value="1" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-600">
+                        <div class="flex justify-between text-xs mt-2 text-gray-500">
+                            <span>0.5x</span>
+                            <span>2x</span>
+                            <span>5x</span>
+                            <span>10x</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col justify-end">
+                        <label class="block font-bold mb-2">Downloads (Mockup)</label>
+                        <div class="flex gap-2">
+                            <button onclick="mockDownload('720p')" class="flex-1 border border-red-600 text-red-600 px-3 py-1 rounded hover:bg-red-50">720p</button>
+                            <button onclick="mockDownload('1080p')" class="flex-1 border border-red-600 text-red-600 px-3 py-1 rounded hover:bg-red-50">1080p</button>
+                            <button onclick="mockDownload('MP3')" class="flex-1 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Audio</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: History -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-bold">Recently Watched</h2>
+                <div id="historyLog" class="space-y-3">
+                    <!-- History items will be injected here -->
+                    <p class="text-gray-500 italic text-sm">No history yet.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let player;
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const themeToggle = document.getElementById('themeToggle');
+        const historyLog = document.getElementById('historyLog');
+
+        // Initialize YouTube Player
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                videoId: 'dQw4w9WgXcQ', // Default video
+                playerVars: {
+                    'playsinline': 1,
+                    'modestbranding': 1,
+                    'rel': 0
+                },
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            loadHistory();
+        }
+
+        function extractVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function loadVideo() {
+            const url = document.getElementById('videoUrl').value;
+            const videoId = extractVideoId(url);
+            
+            if (videoId) {
+                player.loadVideoById(videoId);
+                addToHistory(videoId);
+            } else {
+                alert("Please enter a valid YouTube URL");
+            }
+        }
+
+        // Speed Logic
+        speedSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            speedValue.innerText = val;
+            // The API officially supports up to 2.0x
+            player.setPlaybackRate(parseFloat(val));
+        });
+
+        // Theme Logic
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        });
+
+        // History Logic
+        function addToHistory(id) {
+            let history = JSON.parse(localStorage.getItem('ytHistory') || '[]');
+            if (!history.includes(id)) {
+                history.unshift(id);
+                if (history.length > 5) history.pop();
+                localStorage.setItem('ytHistory', JSON.stringify(history));
+                loadHistory();
+            }
+        }
+
+        function loadHistory() {
+            let history = JSON.parse(localStorage.getItem('ytHistory') || '[]');
+            if (history.length === 0) return;
+
+            historyLog.innerHTML = history.map(id => `
+                <div class="flex items-center gap-3 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border cursor-pointer hover:border-red-500" onclick="player.loadVideoById('${id}')">
+                    <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" class="w-20 rounded shadow">
+                    <div class="text-xs font-medium truncate">Video ID: ${id}</div>
+                </div>
+            `).join('');
+        }
+
+        function mockDownload(quality) {
+            alert(`Download logic for ${quality} would be processed by your Backend (yt-dlp/Node.js).`);
+        }
+
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+</body>
+</html>
