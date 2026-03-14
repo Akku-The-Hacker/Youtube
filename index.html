@@ -1,268 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProTube: Custom YouTube Player</title>
-    <!-- Tailwind CSS for UI -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- YouTube IFrame API -->
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <style>
-        .dark-theme { background-color: #0f0f0f; color: #ffffff; }
-        .dark-theme .card { background-color: #1e1e1e; border-color: #333; }
-        .dark-theme input { background-color: #2a2a2a; color: white; border-color: #444; }
-        .card { transition: all 0.3s ease; }
-    </style>
+
+<title>Advanced YouTube Tool</title>
+
+<link rel="stylesheet" href="style.css">
+
 </head>
-<body class="transition-colors duration-300 bg-gray-50 text-gray-900">
 
-    <div class="min-h-screen p-4 md:p-10">
-        <!-- Header -->
-        <header class="max-w-6xl mx-auto flex justify-between items-center mb-10">
-            <div>
-                <h1 class="text-4xl font-black text-red-600 tracking-tight">PRO<span class="text-gray-400 font-light">TUBE</span></h1>
-                <p class="text-sm text-gray-500">Advanced Playback Controls</p>
-            </div>
-            <button id="themeToggle" class="p-3 rounded-xl bg-white border shadow-sm hover:shadow-md transition card">
-                🌓 Toggle Theme
-            </button>
-        </header>
+<body>
 
-        <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-10">
-            
-            <!-- LEFT COLUMN: PLAYER & CONTROLS -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- URL INPUT AREA -->
-                <div class="card p-6 border rounded-2xl shadow-sm bg-white">
-                    <label class="block text-sm font-semibold mb-2">Paste YouTube Video or Playlist Link</label>
-                    <div class="flex gap-3">
-                        <input type="text" id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." 
-                               class="flex-1 p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 outline-none transition">
-                        <button onclick="handleLoad()" class="bg-red-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transform active:scale-95 transition">
-                            LOAD
-                        </button>
-                    </div>
-                </div>
+<div class="container">
 
-                <!-- PLAYER DISPLAY -->
-                <div class="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-gray-800">
-                    <div id="player"></div>
-                </div>
+<h1>Advanced YouTube Player</h1>
 
-                <!-- ENHANCED CONTROLS CARD -->
-                <div class="card p-8 border rounded-2xl shadow-sm bg-white space-y-8">
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <!-- 1. Playback Speed (PRD 4.2) -->
-                        <div>
-                            <div class="flex justify-between items-center mb-4">
-                                <label class="font-bold text-gray-700 dark:text-gray-200">Playback Speed</label>
-                                <span class="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-sm font-bold"><span id="speedValue">1.0</span>x</span>
-                            </div>
-                            <input type="range" id="speedSlider" min="0.5" max="10" step="0.5" value="1" 
-                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-600">
-                            <div class="flex justify-between text-xs mt-3 text-gray-400 font-medium">
-                                <span>0.5x</span><span>2x</span><span>5x</span><span>10x</span>
-                            </div>
-                        </div>
+<div class="url-box">
 
-                        <!-- 2. Audio Boost Feature (New Implementation) -->
-                        <div>
-                            <div class="flex justify-between items-center mb-4">
-                                <label class="font-bold text-gray-700 dark:text-gray-200">Audio Boost (Amplifier)</label>
-                                <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg text-sm font-bold"><span id="boostValue">100</span>%</span>
-                            </div>
-                            <input type="range" id="boostSlider" min="1" max="5" step="0.1" value="1" 
-                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500">
-                            <div class="flex justify-between text-xs mt-3 text-gray-400 font-medium">
-                                <span>100%</span><span>300%</span><span>500%</span>
-                            </div>
-                            <p id="distortWarning" class="text-[10px] text-orange-600 mt-2 italic hidden font-medium text-center uppercase tracking-wider">
-                                ⚠️ Distortion likely above 300%
-                            </p>
-                        </div>
-                    </div>
+<input id="urlInput" placeholder="Paste YouTube link">
 
-                    <hr class="dark:border-gray-700">
+<button id="playBtn">
+Play
+</button>
 
-                    <!-- 3. Downloads & Utilities (PRD 4.3) -->
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <h4 class="font-bold text-sm uppercase tracking-widest text-gray-400 mb-2">Offline Downloads</h4>
-                            <div class="flex gap-2">
-                                <button onclick="mockDownload('720p')" class="border border-red-500 text-red-500 px-4 py-2 rounded-lg text-sm hover:bg-red-50 transition font-bold">720p HD</button>
-                                <button onclick="mockDownload('1080p')" class="border border-red-500 text-red-500 px-4 py-2 rounded-lg text-sm hover:bg-red-50 transition font-bold">1080p Full HD</button>
-                                <button onclick="mockDownload('MP3')" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition font-bold">Audio (MP3)</button>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] text-gray-400 max-w-[200px]">Downloads adhere to YouTube TOS logic (Back-end processing required)</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+</div>
 
-            <!-- RIGHT COLUMN: HISTORY & QUEUE (PRD 4.5/4.6) -->
-            <div class="space-y-6">
-                <h3 class="text-xl font-black flex items-center gap-2 uppercase tracking-tighter">
-                    <span class="w-2 h-6 bg-red-600 rounded-full"></span>
-                    Recent History
-                </h3>
-                <div id="historyLog" class="space-y-4">
-                    <!-- Dynamic items loaded here -->
-                </div>
-            </div>
+<video
+id="videoPlayer"
+controls
+crossorigin="anonymous">
+</video>
 
-        </main>
-    </div>
+<div class="controls">
 
-    <script>
-        // --- GLOBAL VARIABLES ---
-        let player;
-        let audioCtx, gainNode, source;
-        const speedSlider = document.getElementById('speedSlider');
-        const speedValue = document.getElementById('speedValue');
-        const boostSlider = document.getElementById('boostSlider');
-        const boostValue = document.getElementById('boostValue');
-        const distortWarning = document.getElementById('distortWarning');
+<div class="control">
 
-        // --- YOUTUBE API SETUP ---
-        function onYouTubeIframeAPIReady() {
-            player = new YT.Player('player', {
-                height: '100%',
-                width: '100%',
-                videoId: 'dQw4w9WgXcQ', // Placeholder
-                playerVars: { 
-                    'autoplay': 0,
-                    'modestbranding': 1,
-                    'rel': 0 
-                },
-                events: { 'onReady': onPlayerReady }
-            });
-        }
+<label>Playback Speed</label>
 
-        function onPlayerReady() {
-            console.log("Player Ready");
-            renderHistory();
-        }
+<input
+type="range"
+id="speedSlider"
+min="0.25"
+max="10"
+step="0.25"
+value="1">
 
-        // --- CORE FUNCTIONS ---
+</div>
 
-        function handleLoad() {
-            const url = document.getElementById('videoUrl').value;
-            const videoId = extractVideoId(url);
-            
-            if (videoId) {
-                player.loadVideoById(videoId);
-                addToHistory(videoId);
-                initAudioContext(); // Initialize audio bridge
-            } else {
-                alert("Invalid YouTube URL. Please check and try again.");
-            }
-        }
+<div class="control">
 
-        function extractVideoId(url) {
-            const regex = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regex);
-            return (match && match[2].length === 11) ? match[2] : null;
-        }
+<label>
+Audio Boost
+<span id="boostValue">100%</span>
+</label>
 
-        // --- AUDIO BOOST IMPLEMENTATION (Web Audio API) ---
-        function initAudioContext() {
-            if (!audioCtx) {
-                try {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    audioCtx = new AudioContext();
-                    
-                    // Hook into the YouTube iframe video tag
-                    // Note: This may be limited by browser CORS depending on current YouTube security headers
-                    const videoElement = document.querySelector('#player iframe');
-                    
-                    if (videoElement) {
-                        gainNode = audioCtx.createGain();
-                        // Creating the connection from the iframe element source
-                        source = audioCtx.createMediaElementSource(videoElement);
-                        source.connect(gainNode);
-                        gainNode.connect(audioCtx.destination);
-                    }
-                } catch (e) {
-                    console.warn("Audio Boost initialized but limited by Browser security (CORS).");
-                }
-            }
-        }
+<input
+type="range"
+id="boostSlider"
+min="1"
+max="5"
+step="0.1"
+value="1">
 
-        boostSlider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            boostValue.innerText = Math.round(val * 100);
-            
-            // Toggle distortion warning
-            distortWarning.style.display = (val > 3.0) ? 'block' : 'none';
+<div id="boostWarning"></div>
 
-            // Set actual volume multiplier
-            if (gainNode) {
-                gainNode.gain.setTargetAtTime(val, audioCtx.currentTime, 0.01);
-            }
-            
-            // To fulfill the PRD strictly: Audio Boost works on any gesture
-            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-        });
+</div>
 
-        // --- SPEED CONTROL ---
-        speedSlider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            speedValue.innerText = val.toFixed(1);
-            player.setPlaybackRate(val);
-        });
+</div>
 
-        // --- HISTORY LOGIC ---
-        function addToHistory(id) {
-            let history = JSON.parse(localStorage.getItem('tubeHistory') || '[]');
-            if (!history.includes(id)) {
-                history.unshift(id);
-                if (history.length > 8) history.pop();
-                localStorage.setItem('tubeHistory', JSON.stringify(history));
-                renderHistory();
-            }
-        }
+</div>
 
-        function renderHistory() {
-            const history = JSON.parse(localStorage.getItem('tubeHistory') || '[]');
-            const container = document.getElementById('historyLog');
-            if (history.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 italic text-sm text-center">No history yet.</p>`;
-                return;
-            }
+<script src="player.js"></script>
+<script src="audioBoost.js"></script>
 
-            container.innerHTML = history.map(id => `
-                <div class="group flex gap-3 p-3 bg-white dark:bg-gray-800 rounded-2xl border hover:border-red-500 cursor-pointer transition" onclick="loadFromHistory('${id}')">
-                    <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" class="w-24 rounded-lg shadow-sm group-hover:scale-105 transition">
-                    <div class="flex-1 overflow-hidden">
-                        <div class="text-[10px] text-red-500 font-bold uppercase mb-1">ID: ${id}</div>
-                        <div class="text-xs font-semibold line-clamp-2 dark:text-gray-200">Replay Video</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function loadFromHistory(id) {
-            player.loadVideoById(id);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // --- THEME SWITCHER ---
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            document.body.classList.toggle('dark-theme');
-            localStorage.setItem('user-theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
-        });
-
-        if (localStorage.getItem('user-theme') === 'dark') document.body.classList.add('dark-theme');
-
-        // --- MOCK DOWNLOAD (Frontend Only) ---
-        function mockDownload(quality) {
-            alert(`PRD Logic Triggered:\nInitiating download sequence for ${quality} quality.\n\nTechnical Note: To complete this download, connect a backend server (Node.js/yt-dlp) to serve the stream.`);
-        }
-    </script>
 </body>
+
 </html>
