@@ -5,7 +5,90 @@
 
 <title>Advanced YouTube Tool</title>
 
-<link rel="stylesheet" href="style.css">
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<style>
+
+body{
+background:#0f172a;
+color:white;
+font-family:Arial;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
+
+.container{
+width:900px;
+background:#1e293b;
+padding:25px;
+border-radius:12px;
+box-shadow:0 15px 40px rgba(0,0,0,0.4);
+}
+
+h1{
+text-align:center;
+margin-bottom:20px;
+}
+
+.urlBox{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+}
+
+input{
+flex:1;
+padding:12px;
+border-radius:8px;
+border:none;
+}
+
+button{
+padding:12px 16px;
+border:none;
+background:#6366f1;
+color:white;
+border-radius:8px;
+cursor:pointer;
+}
+
+button:hover{
+background:#4f46e5;
+}
+
+#player{
+margin-top:20px;
+}
+
+.controls{
+margin-top:20px;
+display:flex;
+gap:30px;
+}
+
+.control{
+flex:1;
+}
+
+label{
+display:block;
+margin-bottom:6px;
+}
+
+input[type=range]{
+width:100%;
+}
+
+.warning{
+color:#ff5c5c;
+font-size:12px;
+margin-top:4px;
+}
+
+</style>
 
 </head>
 
@@ -13,37 +96,37 @@
 
 <div class="container">
 
-<h1>Advanced YouTube Player</h1>
+<h1>Custom YouTube Player</h1>
 
-<div class="url-box">
+<div class="urlBox">
 
-<input id="urlInput" placeholder="Paste YouTube link">
+<input
+id="videoURL"
+placeholder="Paste YouTube link here">
 
-<button id="playBtn">
+<button onclick="playVideo()">
 Play
 </button>
 
 </div>
 
-<video
-id="videoPlayer"
-controls
-crossorigin="anonymous">
-</video>
+<div id="player"></div>
 
 <div class="controls">
 
 <div class="control">
 
-<label>Playback Speed</label>
+<label>
+Playback Speed
+</label>
 
 <input
 type="range"
-id="speedSlider"
 min="0.25"
-max="10"
+max="4"
 step="0.25"
-value="1">
+value="1"
+id="speedSlider">
 
 </div>
 
@@ -51,27 +134,117 @@ value="1">
 
 <label>
 Audio Boost
-<span id="boostValue">100%</span>
+<span id="boostValue">
+100%
+</span>
 </label>
 
 <input
 type="range"
-id="boostSlider"
 min="1"
 max="5"
 step="0.1"
-value="1">
+value="1"
+id="boostSlider">
 
-<div id="boostWarning"></div>
-
+<div
+class="warning"
+id="boostWarning">
 </div>
 
 </div>
 
 </div>
 
-<script src="player.js"></script>
-<script src="audioBoost.js"></script>
+</div>
+
+<script>
+
+let player;
+
+function onYouTubeIframeAPIReady(){
+
+player = new YT.Player('player',{
+
+height:'450',
+width:'100%',
+videoId:''
+
+});
+
+}
+
+function extractID(url){
+
+let reg =
+/(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/)([^&]+)/;
+
+let match = url.match(reg);
+
+return match ? match[1] : null;
+
+}
+
+function playVideo(){
+
+let url =
+document.getElementById("videoURL").value;
+
+let id = extractID(url);
+
+if(!id){
+
+alert("Invalid YouTube URL");
+
+return;
+
+}
+
+player.loadVideoById(id);
+
+}
+
+const speedSlider =
+document.getElementById("speedSlider");
+
+speedSlider.addEventListener("input",function(){
+
+player.setPlaybackRate(
+parseFloat(this.value)
+);
+
+});
+
+const boostSlider =
+document.getElementById("boostSlider");
+
+const boostValue =
+document.getElementById("boostValue");
+
+const warning =
+document.getElementById("boostWarning");
+
+boostSlider.addEventListener("input",function(){
+
+let value = parseFloat(this.value);
+
+boostValue.innerText =
+Math.round(value*100)+"%";
+
+if(value>3){
+
+warning.innerText =
+"High boost may cause distortion.";
+
+}else{
+
+warning.innerText="";
+
+}
+
+});
+
+</script>
 
 </body>
 
